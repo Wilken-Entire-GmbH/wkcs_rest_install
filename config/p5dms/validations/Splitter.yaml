@@ -1,0 +1,22 @@
+
+definitions:
+  $id: 'http://wilken.de/p5/schemas/pdfsplitter/defs'
+  definitions:
+    PDFSplitter: 
+      type: object 
+      properties: 
+        description: { type: string }
+        expression: { type: string }
+      required: [ expression ]
+      additionalProperties: false 
+      validateExpression: true 
+      
+schemas:
+  ConfigFile:
+    $id: 'http://wilken.de/p5/schemas/pdfsplitter/ConfigFile'
+    $async: false
+    type: object
+    properties:
+      Splitter: 
+        type: object 
+        additionalProperties: { $ref: defs#/definitions/PDFSplitter }

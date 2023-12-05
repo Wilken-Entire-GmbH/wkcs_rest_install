@@ -1,0 +1,305 @@
+Connectors:
+  windream: 
+    defaults:
+      mapping: 
+        fromWin: 
+          dwDocID: dmsID 
+          wmVar05: Hausnr
+          szText34: Rechnungsnummer
+          szText11: Kontaktgrund
+          szText39: Kundennummer
+          szText36: Straße
+          szText14: creationDate
+          szText38: Name
+          wmVar01: Vorname
+          szText07: wilkenID
+          wmVar00: Zählernummer
+        toWin: 
+          dmsID: dwDocID
+          Hausnr: wmVar05
+          Rechnungsnummer: szText34
+          Kontaktgrund: szText11
+          Kundenummer: szText39
+          Straße: szText36
+          creationDate: szText14
+          Name: szText38
+          Vorname: wmVar01
+          wilkenID: szText07
+          Zählernummer: wmVar00
+      templates:
+        search: 
+          Mode: Synchronous
+          Entity: 
+          Conditions: 
+            - Column: <var>
+              Value: <var> 
+              SearchOperator: StringLike
+              AutoWildcards: false 
+              SearchRelation: Undefined 
+              LeftBrackets: 0 
+              RightBrackets: 0
+          Sorting: 
+            AttributeName: <var> 
+            Direction: Ascending 
+          AttributeFlags: Default 
+          Values: <var> 
+        update: 
+          Item:       
+            Attributes: <var>
+            Id: <var>  
+          ResponseDetails: 0
+          CreateNewVersion: false  
+        delete: 
+          Item: 
+            Id: <var>
+          Flags: 2 
+          ResponseDetail: 0
+        create: 
+          Item: 
+            ObjectType: 
+              Name: <var>
+            Attributes: <var> 
+            Location: <var> 
+            Name: <var> 
+          CreateFolder: true 
+          ResponseDetails: 0 
+
+    baseUrl: ${config.env.baseURL}
+    authorization: 
+      type: Basic 
+      options: 
+        user: ${env.WDSREST_AUTH_USER} 
+        password: ${env.WDSREST_AUTH_PASSWORD}
+    connection: 
+      type: p5dms 
+      options: {}
+    mappings: {}
+    wkcsMethods:  
+      test: 
+        invoke: 
+          transform: |
+            = 
+            {
+              "message": "Restservice is alive"
+            }
+
+      searchDocuments:
+        invoke: 
+          request: 
+            url: /search/paginated
+            params: 
+              query: |
+                = 
+                (
+                  $v_i := function($v) { "[" & ($v ~> $split(',') ~> $map(function($v) { "'" & $v & "'"}) ~> $join(',')) & "]" }; 
+                  $v_like := function($v) { "'%" & $v & "%'"}; 
+                  $v_default := function($v) { "'" & $v & "'" }; 
+                  $vals := {"~": $v_like,   "i": $v_i,   "_": $v_default };
+                  $mapVals := function($o, $v) { $lookup($vals, $lookup($vals, $o) ? $o : "_")($v) }; 
+
+                  $ops := { "~":"like", "=":"eq", "l":"lte", "g":"gte", ">":"gt", "!":"ne", "i":"in" };
+
+                  $cond := function($v) {[ "data.backend.wcs." & $v.property.key,  $lookup($ops,$v.operator), $mapVals($v.operator, $v.property.value) ] ~> $join(' ') }; 
+
+                  $format("%s and classifier in [ 'invoice', 'ermInvoice', 'ermVoucher']",soap.query.$cond($) ~> $join(' and '))
+                )
+              pagesize: |
+                = soap.limit ? soap.limit : 100
+              projection: data.backend.wcs 
+              orderby: -createdate 
+  
+          transform: = response.data.rows
+          mapping: p5dmsToWCS
+
+      addDocumentToSplit: 
+        invoke: 
+          - request:
+              method: post 
+              url: '/windream.web.api/documents/Create'
+              body: |
+                = (
+                    $objType := "Jahresverbrauchsabrechnung";
+                    $location := 'Jahresverbrauchsabrechnung\\\\' & $fromMillis($toMillis($now()),"[M00]-[Y0001]"); 
+
+                    $attrs := soap.contentDescription.properties.{ 
+                        "Name": $lookup($$._defaults.mapping.toWin, key), 
+                        "Value": $count([value]) < 2 ? [value][0] : value 
+                    };
+
+                    _defaults.templates.create ~> | Item | {  
+                        "ObjectType": { "Name": $objType },
+                        "Attributes": [$attrs], 
+                        "Location": $location, 
+                        "Name": $$.soap.contentDescription.filename 
+                      } |;
+                  )
+              options: 
+                requestType: json 
+            transform: |
+              = { "id": 4711 }
+            storeAs: createDoc
+
+      addDocument: 
+        invoke: 
+          - request:
+              method: post 
+              url: '/windream.web.api/documents/Create'
+              body: |
+                = (
+                    $objType := "Jahresverbrauchsabrechnung";
+                    $location := 'Jahresverbrauchsabrechnung\\\\' & $fromMillis($toMillis($now()),"[M00]-[Y0001]"); 
+
+                    $attrs := soap.contentDescription.properties.{ 
+                        "Name": $lookup($$._defaults.mapping.toWin, key), 
+                        "Value": $count([value]) < 2 ? [value][0] : value 
+                    };
+
+                    _defaults.templates.create ~> | Item | {  
+                        "ObjectType": { "Name": $objType },
+                        "Attributes": [$attrs], 
+                        "Location": $location, 
+                        "Name": $$.soap.contentDescription.filename 
+                      } |;
+                  )
+              options: 
+                requestType: json 
+            transform: |
+              = { "id": 4711 }
+            storeAs: createDoc
+          - request: 
+              method: post
+              url: '/windream.web.api/documents/Upload'
+              params: 
+                "['parameter.item.id']": 4711 
+                "['parameter.item.location']": |
+                    = 'Jahresverbrauchsabrechnung\\\\' & $fromMillis($toMillis($now()),"[M00]-[Y0001]")
+                "['parameter.item.name']": = soap.contentDescription.filename
+              body: |
+                =
+                { 
+                  "file": {
+                    "type":"file",
+                    "content": soap.contentData.content,
+                    "contentType": soap.contentData.mimeType ? soap.contentData.mimeType : soap.contentDescription.mimeType,
+                    "filename": soap.contentDescription.filename
+                  }
+                }
+              options: 
+                requestType: formdata
+            transform: | 
+              = 
+              {
+                "dmsId": 4711,
+                "creationDate": "2023-08-20 08:15:30"
+              }
+
+      updateProperties: 
+        invoke:
+          - request:
+              method: post
+              url: "/windream.web.api/search/Search"
+              body: |
+                = (
+                  $varId := soap.wilkenID ? "wilkenID" : "dmsID"; 
+                  $docIdColumn := $lookup(_defaults.mapping.toWin,$varId);
+
+                  _defaults.templates.search ~> | Conditions[0] | { "Column": $docIdColumn , "Value": $lookup($$.soap,$varId) } |
+                      ~> | Sorting | { "AttributeName": $docIdColumn }  |
+                      ~> | $ | { "Values": $append($keys($$._defaults.mapping.fromWin),["##ObjectPath##"]) } |; 
+                  )
+              options: 
+               requestType: json
+            transform: '= { "id": response.data.Result[0].Attributes[Name = "dwDocID"].Value }'
+            storeAs: windoc
+            errors:
+              - condition: = response.data.Count = 0
+                code: 404 
+                message: = $format("document with DocumentId %s not stored in DMS!", soap.DocumentId)
+              - condition: = response.data.HasErrors
+                code: 400 
+                message: = $format("windreamerror with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+          - request: 
+              method: post 
+              url: "/windream.web.api/documents/Update"
+              body: | 
+                = (
+                    $attrs := soap.documentProperties.{ 
+                      "Name": $lookup($$._defaults.mapping.toWin, key), 
+                      "Value": $count([value]) < 2 ? [value][0] : value 
+                    };
+
+                    _defaults.templates.update ~> | Item | { "Id": $$.windoc.id, "Attributes": [$attrs] } |
+                  )
+              options:
+                requestType: json
+            errors: 
+              - condition: = response.data.HasErrors
+                code: 400 
+                message: = $format("windreamerror with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+
+      getDocumentData: 
+        invoke:
+          - request:
+              method: post
+              url: "/windream.web.api/search/Search"
+              body: |
+                = (
+                  $varId := soap.wilkenID ? "wilkenID" : "dmsID"; 
+                  $docIdColumn := $lookup(_defaults.mapping.toWin,$varId);
+
+                  _defaults.templates.search ~> | Conditions[0] | { "Column": $docIdColumn , "Value": $lookup($$.soap,$varId) } |
+                      ~> | Sorting | { "AttributeName": $docIdColumn }  |
+                      ~> | $ | { "Values": $append($keys($$._defaults.mapping.fromWin),["##ObjectPath##"]) } |; 
+                  )
+              options: 
+               requestType: json
+            transform: '= { "id": response.data.Result[0].Attributes[Name = "dwDocID"].Value }'
+            storeAs: windoc
+            errors:
+              - condition: = response.data.Count = 0
+                code: 404 
+                message: = $format("document with DocumentId %s not stored in DMS!", soap.DocumentId)
+              - condition: = response.data.HasErrors
+                code: 400 
+                message: = $format("windreamerror with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+          - request: 
+              method: get 
+              url: = "/windream.web.api/documents/download"
+              params: 
+                "['Item.Id']": = windoc.id
+              options:
+                responseType: buffer
+            transform:       
+              contentType: = "application/pdf"
+              buffer: = response.data 
+
+      getDMSProperties: 
+        invoke:
+          request:
+            method: post
+            url: "/windream.web.api/search/Search"
+            body: |
+              = (
+                  $varId := soap.wilkenID ? "wilkenID" : "dmsID"; 
+                  $docIdColumn := $lookup(_defaults.mapping.toWin,$varId);
+
+                  _defaults.templates.search ~> | Conditions[0] | { "Column": $docIdColumn , "Value": $lookup($$.soap,$varId) } |
+                      ~> | Sorting | { "AttributeName": $docIdColumn }  |
+                      ~> | $ | { "Values": $append($keys($$._defaults.mapping.fromWin),["##ObjectPath##"]) } |; 
+               )
+            options: 
+              requestType: json
+          transform: |
+            = (
+                $toProp := function($v, $k) { { "key": $k, "value": $v } };
+
+                response.data.Result[0].Attributes.$toProp([Value],$lookup($$._defaults.mapping.fromWin,Name))[ key ];
+              )
+          errors:
+            - condition: = response.data.Count = 0
+              code: 404 
+              message: = $format("document with DocumentId %s not stored in DMS!", soap.DocumentId)
+            - condition: = response.data.HasErrors
+              code: 400 
+              message: = $format("windreamerror with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+

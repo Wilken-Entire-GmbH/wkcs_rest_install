@@ -1,0 +1,30 @@
+server:
+  swagger:
+    enable: WDS_SWAGGERUI_ENABLE
+    stats: WDS_SWAGGERSTATS
+  authorization:
+    systemPassword: WDS_SYSTEMPASSWORD
+metric:
+  enabled: WDS_METRIC_ENABLE
+  tenantid: WDS_TENANTID
+retrieval:
+  url: RETRIEVAL_URL
+context:
+  WKCSRest: 
+    application: 
+      title: TENANT_CAPTION
+    server: 
+      http: 
+        port: WKCSREST_HTTP_PORT 
+      soap:   
+        url: WKCSREST_SOAP_URL
+    config:
+      restConnector: WKCSREST_CONNECTOR
+    env: 
+      baseURL: WKCSREST_BASEURL
+      auth_bearer: WKCSREST_AUTH_BEARER
+      d3_repositoryId: WKCSREST_D3_REPOSITORYID
+  WKCSSplitter: 
+    server: 
+      http: 
+        port: WKCSSPLITTER_HTTP_PORT

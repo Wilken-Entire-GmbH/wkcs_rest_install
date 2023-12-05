@@ -1,0 +1,5 @@
+Splitter: 
+  energy:
+    description: splitter for energy documents 
+    expression: |
+      WilkenDMSId:\\s?([a-zA-Z0-9.-]*)

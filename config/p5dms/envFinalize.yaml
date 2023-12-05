@@ -1,0 +1,3 @@
+# P5/2 DMS Post Configuration
+
+WKCSREST_SOAP_URL: http://${env.SOAP_HOSTNAME}:${env.WKCSREST_HTTP_PORT}/soap/WKContentService

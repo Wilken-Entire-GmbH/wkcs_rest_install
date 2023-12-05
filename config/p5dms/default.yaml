@@ -1,0 +1,62 @@
+server:
+  log: 
+    severity: debug
+    # serviceName: GlobalService # if empty uses context name
+    transports:
+      DailyRotateFile:
+        active: true
+        options:
+          datePattern: YYYY-MM-DD # rotate daily
+          dirname: logs # dirname from 
+          # filename:     # if empty => uses serviceName
+          extension: .log
+          maxSize: 20m # max size of file is 20mb
+          maxFiles: 14d   #delete files after 14 days
+      Console:
+        active: true
+  swagger:
+    enable: true
+    file: assets/openapi.yaml
+    uipath: /api-docs
+    stats: true
+  authorization:
+    enable: false
+    certAuth: false
+    systemPassword: f7bfd3b813d09aa8b62ff49d3094adaa7187da2b79f1bd6c7d5b4663ed962d6d
+    login: 
+      - auth: basic 
+    access:
+      auth: basic
+  bindProtocol: ['http']
+metric: 
+  enabled: true 
+  tenantid: WKCS REST
+services:
+  retrieval: 
+    url: 'http://localhost:8080'
+context:
+  WKCSRest: 
+    application: 
+      title: WKCS Contentservice REST
+    server: 
+      http: 
+        port: 8030
+      soap:
+        url: 'http://127.0.0.1:8030/soap/WKContentService'
+        log: true
+    config: 
+      file: wkcsrest/config.yaml
+      restConnector: none
+    env: 
+      baseUrl: ''
+      auth_bearer: ''
+      d3_repositoryId: ''
+    metric: 
+      subtitle: 'WKCS Rest'
+  WKCSSplitter: 
+    application: 
+      title: WKCS PDF Splitter
+    server: 
+      http: 8031
+    config: 
+      file: splitter/config.yaml

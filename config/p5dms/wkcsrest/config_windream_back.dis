@@ -1,0 +1,149 @@
+Connectors:
+  windream: 
+    defaults:    
+      mapping:
+        fromWin: 
+          dwDocId: dmsId 
+          wmVar05: Hausnr
+          szText34: Rechnungsnummer
+          szText11: Kontaktgrund
+          szText39: Kundennummer
+          szText36: Straße
+          szText14: creationDate
+          szText38: Name
+          wmVar01: Vorname
+          szText07: DocumentId
+          wmVar00: Zählernummer
+        toWin: 
+          dmsId: dwDocId
+          Hausnr: wmVar05
+          Rechnungsnummer: szText34
+          Kontaktgrund: szText11
+          Kundenummer: szText39
+          Straße: szText36
+          creationDate: szText14
+          Name: szText38
+          Vorname: wmVar01
+          DocumentId: szText07
+          Zählernummer: wmVar00
+
+    baseUrl: 'http://localhost:3000'
+    authorization: 
+      type: Basic 
+      options: 
+        user: invoice
+        password: invoice
+    connection: {}
+    mappings: {}
+    wcsMethods:  
+      test: 
+        invoke: 
+          transform: |
+            = 
+            {  "message": "Restservice for windream is alive"  }
+
+      searchContent:
+        invoke: 
+          request: 
+            url: /demo
+            params: {}
+          transform: = response.data
+
+      getContentDescription: 
+        invoke:
+          request: 
+              method: post
+              url: /dms/win/search
+              body: |
+                = (
+
+                    $docIdColumn := $lookup(_defaults.mapping.toWin,"DocumentId");
+                    {
+                    "Mode": "Synchronous",
+                    "Entity": "DocumentAndMap",
+                    "Conditions": [
+                      {
+                        "Column": $docIdColumn,						  
+                        "Value": soap.DocumentId,
+                        "SearchOperator": "StringLike",
+                        "AutoWildcards": true,
+                        "SearchRelation": "Undefined",
+                        "LeftBrackets": 0,
+                        "RightBrackets": 0
+                      }
+                    ],
+                    "Sorting": {
+                      "AttributeName": $docIdColumn ,
+                      "Direction": "Ascending"
+                    },
+                    "AttributeFlags": "Default",
+                    "Values": $append($keys(_defaults.mapping.fromWin),["##ObjectPath##"])
+                    }
+                )
+              options: 
+                requestType: json
+          transform: |
+            = (
+              $pick := function($obj,$props) { $props.{ $: $lookup($obj, $)} ~> $merge };
+              $toProp := function($v, $k) { { "key": $k, "value": $v } };
+
+              $rows := response.data.Result.$merge([
+                  { 
+                    "filename": Name,
+                    "mimeType": "application/pdf",
+                    "docType": "EGYDOCS"
+                  },
+                Attributes.{ $lookup($$._defaults.mapping.fromWin,Name): Value }
+              ]);
+            
+              $res := $rows.(
+                $main := $pick($,["DocumentId", "mimeType", "filename","creationDate"]);
+
+                $merge([
+                  $main,
+                  { "properties": $each($, $toProp)[$not( key in $keys($main))] }
+                ])
+              );
+
+              $res[0]
+            )
+          errors:
+            - condition: = response.data.Count = 0
+              code: 404 
+              message: = $format("document with DocumentId %s not stored in DMS!", soap.DocumentId)
+
+      getContentData: 
+        invoke: 
+          request: 
+            url: /demo
+            params: {}
+          transform: = response.data
+
+      updateProperties: 
+        invoke: 
+          request: 
+            url: /demo
+            params: {}
+          transform: = response.data
+
+      addContent: 
+        invoke: 
+          request: 
+            url: /demo
+            params: {}
+          transform: = response.data
+
+      supportsDelete: 
+        invoke: 
+          request: 
+            url: /demo
+            params: {}
+          transform: = response.data
+            
+      delete: 
+        invoke: 
+          request: 
+            url: /demo
+            params: {}
+          transform: = response.data
+              
