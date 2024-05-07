@@ -1,0 +1,103 @@
+Connectors:
+  saperion: 
+    defaults:
+      mapping: 
+        fromSaperion: 
+          DOCID: wilkenID
+          VERTRAGSKONTONR: VertragsKontoNr
+          VERTRAGSKONTONAME: VertragsKontoName 
+          BELEGDATUM: Belegdatum 
+          BELEGART: Belegart 
+        toSaperion: 
+          VertragsKontoNr: VERTRAGSKONTONR
+          VertragsKontoName: VERTRAGSKONTONAME
+          Belegdatum: BELEGDATUM 
+          Belegart: BELEGART
+
+    baseUrl: ${config.env.baseURL}
+
+    authorization: 
+      type: Header
+      options: 
+        key: X-API-KEY
+        value: ${env.WKCSREST_AUTH_APIKEY}
+
+    connection: {}
+
+    mappings: {}
+    wkcsMethods:  
+      test: 
+        invoke: 
+          request:  
+            method: get 
+            url: /api/dms
+          transform: = response.data 
+ 
+      searchDocuments:
+        invoke: 
+          transform: {}
+
+      addDocumentToSplit: 
+        invoke: 
+          transform: {}
+
+      updateProperties: 
+        invoke:
+          request: 
+            method: put 
+            url: = $format("/api/simple/keystores/%s/%s/meta",soap.location, soap.wilkenID)
+            body: |
+              = { "Meta": soap.documentProperties.({$lookup($$._defaults.mapping.toSaperion, key): value[0]}) ~> $merge }
+          transform: = response.data 
+          errors: []
+            
+      addDocument: 
+        invoke: 
+          request:
+            method: put 
+            url: = $format("/api/simple/keystores/%s/%s",soap.documentDescription.location, soap.documentDescription.wilkenID)
+            body: |
+              = { 
+                  "document": {
+                    "type": "data",
+                    "content": { "Meta": soap.documentDescription.properties.({$lookup($$._defaults.mapping.toSaperion, key): value[0]}) ~> $merge }
+                  },
+                  "file": {
+                    "type":"file",
+                    "content": soap.documentData.data,
+                    "filename": soap.documentDescription.filename,
+                    "contentType": soap.documentData.mimeType
+                  }
+                }
+            options: 
+              requestType: formdata
+          transform: |
+             = { "dmsId": response.data.XHdoc }
+
+      getDocumentData: 
+        invoke:
+          request: 
+            method: get 
+            url: = $format("/api/simple/keystores/%s/%s", soap.location, soap.wilkenID)
+            options:
+              responseType: buffer
+          transform: 
+            contentType: = response.headers."content-type"
+            buffer: = response.data
+            filename: = $getContentDispositionFilename(response.headers."content-disposition")
+          errors: []
+
+      getDMSProperties: 
+        invoke:
+          request:
+            method: get
+            url: = $format("/api/simple/keystores/%s/%s/meta",soap.location, soap.wilkenID) 
+            options: 
+              requestType: json
+          transform: |
+            = response.data.Meta.$each(function($v, $k) {
+                { "key": $lookup($$._defaults.mapping.fromSaperion,$k), "value": [$v] } 
+              })[ key ]
+          errors: []
+  
+
