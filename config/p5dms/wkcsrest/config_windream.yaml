@@ -5,11 +5,12 @@ Connectors:
         fromWin: 
           dwDocID: dmsID 
           wmVar05: Hausnr
+          wmVar04: Hausunternr
           szText34: Rechnungsnummer
           szText11: Kontaktgrund
           szText39: Kundennummer
           szText36: Straße
-          decCreationTime: creationDate
+          szText14: DatumWilken
           szText38: Name
           wmVar01: Vorname
           szText07: wilkenID
@@ -17,16 +18,25 @@ Connectors:
         toWin: 
           dmsID: dwDocID
           Hausnr: wmVar05
+          Hausunternr: wmVar04
           Rechnungsnummer: szText34
           Kontaktgrund: szText11
-          Kundenummer: szText39
+          Kundennummer: szText39
           Straße: szText36
-          creationDate: decCreationTime
+          DatumWilken: szText14
           Name: szText38
           Vorname: wmVar01
           wilkenID: szText07
           Zählernummer: wmVar00
       templates:
+        addsearch: 
+          Mode: Synchronous
+          Entity: Document
+          Sorting: 
+            AttributeName: <var> 
+            Direction: Ascending 
+          AttributeFlags: Default 
+          Values: <var> 
         search: 
           Mode: Synchronous
           Entity: Document
@@ -69,8 +79,8 @@ Connectors:
     authorization: 
       type: Basic 
       options: 
-        user: ${env.WDSREST_AUTH_USER} 
-        password: ${env.WDSREST_AUTH_PASSWORD}
+        user: ${env.WKCSREST_AUTH_USER} 
+        password: ${env.WKCSREST_AUTH_PASSWORD}
     connection: 
       type: p5dms 
       options: {}
@@ -143,6 +153,35 @@ Connectors:
       addDocument: 
         invoke: 
           - request:
+              method: post
+              url: "/windream.web.api/search/Search"
+              body: |
+                = (
+                  $varId := soap.documentDescription.wilkenID ? "wilkenID" : "dmsID"; 
+                  $docIdColumn := $lookup(_defaults.mapping.toWin,$varId);
+
+                  _defaults.templates.addsearch ~> | $ | { "Conditions": [{ 
+                        "Column": $docIdColumn , 
+                        "Value": $lookup($$.soap.documentDescription,$varId), 
+                        "SearchOperator": "StringLike", 
+                        "AutoWildcards": false, 
+                        "SearchRelation": "undefined", 
+                        "LeftBrackets": 0,
+                        "RightBrackets": 0
+                        }] } |
+                      ~> | Sorting | { "AttributeName": $docIdColumn }  |
+                      ~> | $ | { "Values": $append($keys($$._defaults.mapping.fromWin),["##ObjectPath##"]) } |; 
+                  )
+              options: 
+               requestType: json
+            transform: '= { "id": response.data.Result[0].Attributes[Name = "dwDocID"].Value }'
+            storeAs: windoc
+            errors:
+              - condition: = response.data.HasErrors
+                code: 400 
+                message: = $format("search windreamerror with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+          - enabled: '= windoc.id ? false : true'
+            request:
               method: post 
               url: '/windream.web.api/documents/Create'
               body: |
@@ -152,7 +191,9 @@ Connectors:
                     $kontaktgrund := soap.documentDescription.properties[ key = "Kontaktgrund"].([value][0]);
                     $subFolder := $kontaktgrund ? $kontaktgrund : "keiner"; 
                     $location := 'Jahresverbrauchsabrechnung\\\\' & $fromMillis($toMillis($now()),"[M01]-[Y0001]") & '\\\\' & $subFolder; 
-
+                    $extension := [$each($$._defaults.mimeTypes, function($v, $k) { $k[$v=$$.soap.documentDescription.mimeType] })][0]; 
+                    $filename :=  soap.documentDescription.wilkenID & '.' & ($extension ? $extension : 'txt');
+                    
                     $attrs := [soap.documentDescription.properties.{ 
                         "Name": $lookup($$._defaults.mapping.toWin, key), 
                         "Value": $count([value]) < 2 ? [value][0] : value 
@@ -162,22 +203,24 @@ Connectors:
                         "ObjectType": { "Name": $objType },
                         "Attributes": $append($attrs,{ "Name": $docIdColumn, "Value": $$.soap.documentDescription.wilkenID }), 
                         "Location": $location, 
-                        "Name": $$.soap.documentDescription.filename 
+                        "Name": $filename 
                       } |;
                   )
+                  
               options: 
                 requestType: json 
             transform: '= { "id": response.data.Item.Id }'
             errors: 
               - condition: = response.data.HasErrors
                 code: 400 
-                message: = $format("windreamerror on create with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+                message: = $format("create windreamerror on create with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
             storeAs: createDoc
+    
           - request: 
               method: post
               url: '/windream.web.api/documents/Upload'
               params: 
-                "['parameter.item.id']": = createDoc.id 
+                "['parameter.item.id']": '= createDoc.id ? createDoc.id : windoc.id'
                 "['parameter.item.location']": |
                     = (
                         $kontaktgrund := soap.documentDescription.properties[ key = "Kontaktgrund"].([value][0]);
@@ -185,29 +228,56 @@ Connectors:
                         
                         'Jahresverbrauchsabrechnung\\\\' & $fromMillis($toMillis($now()),"[M01]-[Y0001]") & '\\\\' & $subFolder 
                       )
-                "['parameter.item.name']": = soap.contentDescription.filename
+                "['parameter.item.name']": = soap.documentDescription.filename
+                "['parameter.flags']": = windoc.id ? 4 
               body: |
                 =
+                (
+                    $extension := [$each($$._defaults.mimeTypes, function($v, $k) { $k[$v=$$.soap.documentDescription.mimeType] })][0]; 
+                    $filename := soap.documentDescription.wilkenID & '.' & ($extension ? $extension : 'txt');
+                    
                 { 
                   "file": {
                     "type":"file",
                     "content": soap.documentData.data,
                     "contentType": soap.documentData.mimeType ? soap.documentData.mimeType : soap.documentDescription.mimeType,
-                    "filename": soap.documentDescription.filename
+                    "filename": $filename
                   }
                 }
+                )
               options: 
                 requestType: formdata
             transform: | 
               = 
               {
-                "dmsId": createDoc.id,
-                "creationDate": $fromMillis($toMillis($now()),"[Y0001]-[M01]-[D01] [H01]:[m01]:[s01]")
+                "dmsId": createDoc.id ? createDoc.id : windoc.id
               }
             errors: 
               - condition: = response.data.HasErrors
                 code: 400 
-                message: = $format("windreamerror on upload with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+                message: = $format("upload windreamerror on upload with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+          - enabled: '= windoc.id ? true : false'
+            request:          
+              method: post 
+              url: "/windream.web.api/documents/Update"
+              body: | 
+                = ( 
+                    $attrs := soap.documentDescription.properties.{ 
+                      "Name": $lookup($$._defaults.mapping.toWin, key), 
+                      "Value": $count([value]) < 2 ? [value][0] : value 
+                    };
+
+                    _defaults.templates.update ~> | Item | { "Id": $$.windoc.id, "Attributes": [$attrs] } |
+                  )
+              options:
+                requestType: json
+            transform: |
+              = { "dmsId": windoc.id }
+            errors: 
+              - condition: = response.data.HasErrors
+                code: 400 
+                message: = $format("windreamerror with errno %s message %s", response.data.Error.ErrorCode, response.data.Error.Message)
+
 
       updateProperties: 
         invoke:
@@ -326,7 +396,6 @@ Connectors:
                   response.data.Result[0].Attributes.$toProp([Value],$lookup($$._defaults.mapping.fromWin,Name))[ key ],
                   $toProp($mimeType, "mimeType")
                 ]
-
               )
           errors:
             - condition: = response.data.Count = 0

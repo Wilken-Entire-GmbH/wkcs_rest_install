@@ -2,11 +2,22 @@
 definitions:
   $id: 'http://wilken.de/p5/schemas/pdfsplitter/defs'
   definitions:
+    
+    MetaData: 
+      type: object 
+      properties:
+        soapUrl: { type: string }
+        keyExtractor: { type: string }
+        transformer: { type: object }
+      required: []
+      additionalProperties: false 
+
     PDFSplitter: 
       type: object 
       properties: 
         description: { type: string }
         expression: { type: string }
+        metadata: { $ref: defs#/definitions/MetaData }
       required: [ expression ]
       additionalProperties: false 
       validateExpression: true 

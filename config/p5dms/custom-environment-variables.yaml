@@ -24,7 +24,12 @@ context:
       baseURL: WKCSREST_BASEURL
       auth_bearer: WKCSREST_AUTH_BEARER
       d3_repositoryId: WKCSREST_D3_REPOSITORYID
+    urls: 
+      splitter: WKCSREST_SPLITTER_URL
+      wkcs: WKCSREST_URL
   WKCSSplitter: 
     server: 
       http: 
         port: WKCSSPLITTER_HTTP_PORT
+      urls:
+        wkcs: WKCSREST_URL

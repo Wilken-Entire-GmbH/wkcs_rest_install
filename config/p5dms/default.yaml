@@ -41,12 +41,18 @@ context:
     server: 
       http: 
         port: 8030
+      timeout:
+        request: 30000
+        response: 3600000
       soap:
         url: 'http://127.0.0.1:8030/soap/WKContentService'
         log: true
     config: 
       file: wkcsrest/config.yaml
       restConnector: none
+    urls: 
+      splitter: http://localhost:6953 
+      wkcs: http://localhost:6952
     env: 
       baseUrl: ''
       auth_bearer: ''
@@ -60,3 +66,5 @@ context:
       http: 8031
     config: 
       file: splitter/config.yaml
+    urls: 
+      wkcs: http://127.0.0.1:6952

@@ -1,11 +1,11 @@
-# P5/2 DMS WKCS REST Adapter Tenant Configuration
+# P5/2 DMS WCS3 Mockservice Tenant Configuration
 
 # tenant 
-TENANT_CAPTION: Test - WKCS REST Adapter
+TENANT_CAPTION: Prod - WKCS REST Adapter
 
 # http port of service
-WKCSREST_HTTP_PORT: 6950
-WKCSSPLITTER_HTTP_PORT: 6951 
+WKCSREST_HTTP_PORT: 6952
+WKCSSPLITTER_HTTP_PORT: 6953 
 
 # rest connector type 
 WKCSREST_CONNECTOR: windream

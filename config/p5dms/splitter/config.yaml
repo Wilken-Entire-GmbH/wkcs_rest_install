@@ -3,3 +3,44 @@ Splitter:
     description: splitter for energy documents 
     expression: |
       WilkenDMSId:\\s?([a-zA-Z0-9.-]*)
+    metadata:
+      soapUrl: ${env.WKCSREST_ENERGY_URL}
+      keyExtractor: |
+        <.*#([a-zA-Z0-9.-\\s)(]*).*>
+      transformer: 
+        documentDescription: 
+          creationDate: = $fromMillis($toMillis($now()),"[Y0001]-[M01]-[D01] [H01]:[m01]:[s01]")
+          docType: Energy
+          filename: = data.dmsDokumentId & ".pdf"
+          mimeType: application/pdf
+          wilkenID: = data.dmsDokumentId
+          properties: 
+            - key: Kundennummer 
+              value: 
+                - |
+                  = data.Kundennummer 
+            - key: Name 
+              value: 
+                - |
+                  = data.Name
+            - key: Vorname
+              value: 
+                - |
+                  = data.Vorname
+            - key: Kontaktgrund
+              value: 
+                - |
+                  = data.Kontakttyp
+            - key: DatumWilken
+              value: 
+                - |
+                  = data.Dokumentanlagedatum
+            - key: Straße
+              value: 
+                - |
+                  = data.Abnahmestelle_Strasse
+            - key: Hausnr
+              value: 
+                - |
+                  = data.Abnahmestelle_Hausnummer
+

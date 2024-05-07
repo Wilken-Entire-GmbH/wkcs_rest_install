@@ -51,6 +51,7 @@ definitions:
     MethodConfig: 
       type: object 
       properties: 
+        enabled: { type: string, default: '= true' }
         request: { $ref: defs#/definitions/MethodRequestConfig }
         transform: { type: [string, object] }
         mapping: { type: [string, object] }

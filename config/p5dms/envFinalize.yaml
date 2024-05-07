@@ -1,3 +1,6 @@
 # P5/2 DMS Post Configuration
 
 WKCSREST_SOAP_URL: http://${env.SOAP_HOSTNAME}:${env.WKCSREST_HTTP_PORT}/soap/WKContentService
+WKCSREST_SPLITTER_URL: http://${env.SOAP_HOSTNAME}:${env.WKCSSPLITTER_HTTP_PORT}
+WKCSREST_ENERGY_URL: ${env.WKSP_SPLITTER_URL}/soap/EnergyDMSIntegrationService/v1/EnergyDMSIntegrationService.EnergyDMSIntegrationServicePort?wsdl
+WKCSREST_URL: http://${env.SOAP_HOSTNAME}:${env.WKCSREST_HTTP_PORT}

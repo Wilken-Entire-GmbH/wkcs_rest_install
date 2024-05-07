@@ -405,6 +405,7 @@ Connectors:
         "mseed": "application/vnd.fdsn.mseed"
         "mseq": "application/vnd.mseq"
         "msf": "application/vnd.epson.msf"
+        "msg": "application/vnd.ms-outlook"
         "msh": "model/mesh"
         "msi": "application/x-msdownload"
         "msl": "application/vnd.mobius.msl"
@@ -787,7 +788,8 @@ Connectors:
         "xlb": "application/vnd.ms-excel"
         "xlc": "application/vnd.ms-excel"
         "xlm": "application/vnd.ms-excel"
-        "xls": "application/vnd.ms-excel"
+        # vma: application/vnd.ms-excel to application/excel
+        "xls": "application/excel"
         "xlsb": "application/vnd.ms-excel.sheet.binary.macroenabled.12"
         "xlsm": "application/vnd.ms-excel.sheet.macroenabled.12"
         "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
