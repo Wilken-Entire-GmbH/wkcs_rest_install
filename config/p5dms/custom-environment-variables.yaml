@@ -31,5 +31,5 @@ context:
     server: 
       http: 
         port: WKCSSPLITTER_HTTP_PORT
-      urls:
-        wkcs: WKCSREST_URL
+    urls:
+      wkcs: WKCSREST_URL

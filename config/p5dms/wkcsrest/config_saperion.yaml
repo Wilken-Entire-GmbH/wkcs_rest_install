@@ -4,15 +4,15 @@ Connectors:
       mapping: 
         fromSaperion: 
           DOCID: wilkenID
-          VERTRAGSKONTONR: VertragsKontoNr
-          VERTRAGSKONTONAME: VertragsKontoName 
-          BELEGDATUM: Belegdatum 
-          BELEGART: Belegart 
+          VERTRAGSKONTONR: VERTRAGSKONTONR
+          VERTRAGSKONTONAME: VERTRAGSKONTONAME 
+          BELEGDATUM: BELEGDATUM 
+          BELEGART: BELEGART 
         toSaperion: 
-          VertragsKontoNr: VERTRAGSKONTONR
-          VertragsKontoName: VERTRAGSKONTONAME
-          Belegdatum: BELEGDATUM 
-          Belegart: BELEGART
+          VERTRAGSKONTONR: VERTRAGSKONTONR
+          VERTRAGSKONTONAME: VERTRAGSKONTONAME
+          BELEGDATUM: BELEGDATUM 
+          BELEGART: BELEGART
 
     baseUrl: ${config.env.baseURL}
 
@@ -57,18 +57,22 @@ Connectors:
             method: put 
             url: = $format("/api/simple/keystores/%s/%s",soap.documentDescription.location, soap.documentDescription.wilkenID)
             body: |
-              = { 
+              = (
+                 $input := $.soap ~> | documentDescription.properties[key = "BELEGDATUM"] 
+                    | { "key": "BELEGDATUM", "value": [  $fromMillis($toMillis(value[0],"[D].[M].[Y]"))]} |;
+                 { 
                   "document": {
                     "type": "data",
-                    "content": { "Meta": soap.documentDescription.properties.({$lookup($$._defaults.mapping.toSaperion, key): value[0]}) ~> $merge }
+                    "content": { "Meta": $input.documentDescription.properties.({$lookup($$._defaults.mapping.toSaperion, key): value[0]}) ~> $merge }
                   },
                   "file": {
                     "type":"file",
                     "content": soap.documentData.data,
-                    "filename": soap.documentDescription.filename,
+                    "filename": soap.documentDescription.wilkenID & "." & [$each($$._defaults.mimeTypes, function($v, $k) { $k[$v=$$.soap.documentData.mimeType] })][0],
                     "contentType": soap.documentData.mimeType
                   }
-                }
+                 }
+                )
             options: 
               requestType: formdata
           transform: |
