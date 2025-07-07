@@ -1,18 +1,6 @@
 Connectors:
   saperion: 
-    defaults:
-      mapping: 
-        fromSaperion: 
-          DOCID: wilkenID
-          VERTRAGSKONTONR: VERTRAGSKONTONR
-          VERTRAGSKONTONAME: VERTRAGSKONTONAME 
-          BELEGDATUM: BELEGDATUM 
-          BELEGART: BELEGART 
-        toSaperion: 
-          VERTRAGSKONTONR: VERTRAGSKONTONR
-          VERTRAGSKONTONAME: VERTRAGSKONTONAME
-          BELEGDATUM: BELEGDATUM 
-          BELEGART: BELEGART
+    defaults: {}
 
     baseUrl: ${config.env.baseURL}
 

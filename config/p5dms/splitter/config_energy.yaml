@@ -14,22 +14,3 @@ Splitter:
           filename: = data.dmsDokumentId & ".pdf"
           mimeType: application/pdf
           wilkenID: = data.dmsDokumentId
-          location: WILKEN_TWF_VERTRIEB
-          properties: 
-            - key: VERTRAGSKONTONR
-              value: 
-                - |
-                  = data.Kundennummer
-            - key: VERTRAGSKONTONAME 
-              value: 
-                - |
-                  = data.Name & ", " & data.Vorname
-            - key: BELEGDATUM 
-              value: 
-                - |
-                  = data.Druckdatum
-            - key: BELEGART
-              value: 
-                - |
-                  = data.Kontakttyp
- 

@@ -1,0 +1,136 @@
+Splitter: 
+  energy:
+    metadata:
+      transformer: 
+        documentDescription: 
+          location: WILKEN_TWF_VERTRIEB
+          properties: 
+            - key: VERTRAGSKONTONR
+              value: 
+                - |
+                  = data.Kundennummer
+            - key: VERTRAGSKONTONAME 
+              value: 
+                - |
+                  = data.Name & ", " & data.Vorname
+            - key: BELEGDATUM 
+              value: 
+                - |
+                  = data.Druckdatum
+            - key: BELEGART
+              value: 
+                - |
+                  = data.Kontakttyp
+            - key: BELEGNR
+              value: 
+                - |
+                  = data.Rechnungsnummer
+            - key: BELEGBEZEICHNUNG
+              value: 
+                - |
+                  = data.Kontaktname
+            - key: ABNAHME_PLZ
+              value: 
+                - |
+                  = data.Abnahmestelle_PLZ
+            - key: ABNAHME_ORT
+              value: 
+                - |
+                  = data.Abnahmestelle_Ort
+            - key: ABNAHME_STRASSE
+              value: 
+                - |
+                  = data.Abnahmestelle_Strasse
+            - key: ABNAHME_HAUSNR_VON
+              value: 
+                - |
+                  = data.Abnahmestelle_Hausnummer
+            - key: ABNAHME_HAUSNR_ZUSATZ_VON
+              value: 
+                - |
+                  = data.Abnahmestelle_Hausunternummer
+            - key: ZAEHLPUNKTBEZEICHNUNG
+              value: 
+                - |
+                  = data.Zaehlpunktbezeichnung
+            - key: ZAEHLERNR
+              value: 
+                - |
+                  = data.Zaehlernr
+            - key: ABNAHME_NR
+              value: 
+                - |
+                  = data.Kundennummer
+            - key: ABNAHME_NAME
+              value: 
+                - |
+                  = data.Name
+            - key: ABNAHME_VORNAME
+              value: 
+                - |
+                  = data.Vorname
+            - key: BETRAG_BRUTTO
+              value: 
+                - |
+                  = data.Betrag_Brutto
+            - key: ABNAHME_NAME_ZUSATZ
+              value: 
+                - |
+                  = data.Namenszusatz
+            - key: ABNAHME_ADRESSE_ZUSATZ
+              value: 
+                - |
+                  = data.Namenszusatz
+            - key: BELEG_EMPFAENGERNR
+              value: 
+                - |
+                  = data.Kundennummer
+            - key: BELEG_NAME
+              value: 
+                - |
+                  = data.Rechnungsadresse_Name
+            - key: BELEG_VORNAME
+              value: 
+                - |
+                  = data.Rechnungsadresse_Vorname
+            - key: BELEG_ADRESSE_ZUSATZ
+              value: 
+                - |
+                  = data.Rechnungsadresse_Adresszusatz
+            - key: BELEG_PLZ
+              value: 
+                - |
+                  = data.Rechnungsadresse_PLZ
+            - key: BELEG_ORT
+              value: 
+                - |
+                  = data.Rechnungsadresse_Ort
+            - key: BELEG_STRASSE
+              value: 
+                - |
+                  = data.Rechnungsadresse_Strasse
+            - key: BELEG_HAUSNR_VON
+              value: 
+                - |
+                  = data.Rechnungsadresse_HausnummerVon
+            - key: BELEG_HAUSNR_BIS
+              value: 
+                - |
+                  = data.Rechnungsadresse_HausnummerBis
+            - key: BELEG_HAUSNR_ZUSATZ_VON
+              value: 
+                - |
+                  = data.Rechnungsadresse_HausnummerVonZusatz
+            - key: BELEG_HAUSNR_ZUSATZ_BIS
+              value: 
+                - |
+                  = data.Rechnungsadresse_HausnummerBisZusatz
+            - key: ABNAHME_GESCHAETSPARTNERNR
+              value: 
+                - |
+                  = data.GP-Nummer
+            - key: BELEG_GESCHAETSPARTNERNR
+              value: 
+                - |
+                  = data.GP-Nummer
+ 
